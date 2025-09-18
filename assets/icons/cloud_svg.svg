@@ -1,0 +1,19 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Main cloud shape -->
+  <path d="M18 40c-5.523 0-10-4.477-10-10s4.477-10 10-10c.456 0 .905.031 1.343.092C21.204 16.225 25.53 14 30.5 14c6.904 0 12.5 5.596 12.5 12.5 0 .427-.021.85-.063 1.267C44.287 27.287 45.618 27 47 27c5.523 0 10 4.477 10 10s-4.477 10-10 10H18z" fill="#4DB6AC"/>
+  
+  <!-- Cloud shadow/depth -->
+  <path d="M18 40c-5.523 0-10-4.477-10-10s4.477-10 10-10c.456 0 .905.031 1.343.092C21.204 16.225 25.53 14 30.5 14c6.904 0 12.5 5.596 12.5 12.5 0 .427-.021.85-.063 1.267C44.287 27.287 45.618 27 47 27c5.523 0 10 4.477 10 10s-4.477 10-10 10H18z" fill="#00695C" opacity="0.2"/>
+  
+  <!-- Secondary smaller clouds -->
+  <circle cx="15" cy="25" r="6" fill="#80CBC4"/>
+  <circle cx="50" cy="30" r="5" fill="#80CBC4"/>
+  
+  <!-- Cloud highlights -->
+  <ellipse cx="25" cy="22" rx="10" ry="5" fill="#FFFFFF" opacity="0.5"/>
+  <ellipse cx="40" cy="25" rx="8" ry="4" fill="#FFFFFF" opacity="0.3"/>
+  
+  <!-- Smaller highlight details -->
+  <circle cx="22" cy="20" r="3" fill="#FFFFFF" opacity="0.7"/>
+  <circle cx="38" cy="23" r="2" fill="#FFFFFF" opacity="0.6"/>
+</svg>

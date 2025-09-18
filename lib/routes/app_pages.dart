@@ -10,16 +10,16 @@ class AppPages {
   static final pages = [
     GetPage(
       name: AppRoutes.home,
-      page: () => HomeView(),
+      page: () => const HomeView(),
       binding: HomeBinding(),
     ),
     GetPage(
       name: AppRoutes.forecast,
-      page: () => ForecastView(),
+      page: () => const ForecastView(),
     ),
     GetPage(
       name: AppRoutes.forecastScreen,
-      page: () =>  ForecastScreen(),
+      page: () =>  const ForecastScreen(),
     ),
     GetPage(
       name: AppRoutes.settings,

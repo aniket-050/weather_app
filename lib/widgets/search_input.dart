@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../controllers/weather_controller.dart';
 import '../controllers/settings_controller.dart';
@@ -14,6 +15,9 @@ class _SearchInputState extends State<SearchInput> {
   bool _showSuggestions = false;
   List<String> _suggestions = [];
 
+  // Track if a suggestion was just selected to prevent immediate hiding
+  bool _suggestionSelected = false;
+
   @override
   void initState() {
     super.initState();
@@ -23,6 +27,7 @@ class _SearchInputState extends State<SearchInput> {
   @override
   void dispose() {
     _controller.dispose();
+    _focusNode.removeListener(_onFocusChange);
     _focusNode.dispose();
     super.dispose();
   }
@@ -34,14 +39,13 @@ class _SearchInputState extends State<SearchInput> {
         _showSuggestions = true;
       });
     } else {
-// Delay hiding suggestions to allow tap on suggestions
-      Future.delayed(Duration(milliseconds: 150), () {
-        if (mounted) {
-          setState(() {
-            _showSuggestions = false;
-          });
-        }
-      });
+      // Only hide if a suggestion wasn't just selected
+      if (!_suggestionSelected) {
+        setState(() {
+          _showSuggestions = false;
+        });
+      }
+      _suggestionSelected = false;
     }
   }
 
@@ -53,19 +57,37 @@ class _SearchInputState extends State<SearchInput> {
   }
 
   void _selectSuggestion(String city) {
+    _suggestionSelected = true;
     _controller.text = city;
     setState(() {
       _showSuggestions = false;
     });
-    _focusNode.unfocus();
-    _searchCity(city);
+    // Use post frame callback to ensure UI updates before unfocusing
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.unfocus();
+      _searchCity(city);
+    });
   }
 
   void _searchCity(String city) {
-    if (city.isNotEmpty) {
+    if (city.trim().isNotEmpty) {
+      HapticFeedback.lightImpact();
       final weatherController = Get.find<WeatherController>();
       weatherController.searchWeather(city);
     }
+  }
+
+  void _clearSearch() {
+    HapticFeedback.lightImpact();
+    _controller.clear();
+    _updateSuggestions('');
+    setState(() {});
+  }
+
+  void _showHistory() {
+    HapticFeedback.lightImpact();
+    _focusNode.requestFocus();
+    _updateSuggestions('');
   }
 
   @override
@@ -77,25 +99,24 @@ class _SearchInputState extends State<SearchInput> {
 
       return Column(
         children: [
-// Search Input Container
-          Container(
+          // Search Input Container
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutCubic,
             decoration: BoxDecoration(
               color: _getSearchBackground(isDark),
               borderRadius: BorderRadius.circular(25),
-              border: _showSuggestions
-                  ? Border.all(
-                      color: _getSearchBorderActive(isDark),
-                      width: 2,
-                    )
-                  : Border.all(
-                      color: _getSearchBorder(isDark),
-                      width: 1,
-                    ),
+              border: Border.all(
+                color: _showSuggestions
+                    ? _getSearchBorderActive(isDark)
+                    : _getSearchBorder(isDark),
+                width: _showSuggestions ? 2 : 1,
+              ),
               boxShadow: [
                 BoxShadow(
                   color: _getSearchShadow(isDark),
                   blurRadius: 15,
-                  offset: Offset(0, 4),
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
@@ -115,30 +136,41 @@ class _SearchInputState extends State<SearchInput> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (_controller.text.isNotEmpty)
-                      IconButton(
-                        icon: Icon(
-                          Icons.clear,
-                          color: _getIconColor(isDark),
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(20),
+                          onTap: _clearSearch,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            child: Icon(
+                              Icons.clear,
+                              color: _getIconColor(isDark),
+                              size: 20,
+                            ),
+                          ),
                         ),
-                        onPressed: () {
-                          _controller.clear();
-                          _updateSuggestions('');
-                        },
                       ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.history,
-                        color: _getIconColor(isDark),
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: _showHistory,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          child: Icon(
+                            Icons.history,
+                            color: _getIconColor(isDark),
+                            size: 22,
+                          ),
+                        ),
                       ),
-                      onPressed: () {
-                        _focusNode.requestFocus();
-                        _updateSuggestions('');
-                      },
                     ),
+                    const SizedBox(width: 8),
                   ],
                 ),
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(
+                contentPadding: const EdgeInsets.symmetric(
                   horizontal: 20,
                   vertical: 15,
                 ),
@@ -156,10 +188,14 @@ class _SearchInputState extends State<SearchInput> {
             ),
           ),
 
-// Suggestions Dropdown
-          if (_showSuggestions && _suggestions.isNotEmpty)
-            Container(
-              margin: EdgeInsets.only(top: 8),
+          // Suggestions Dropdown
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: _showSuggestions && _suggestions.isNotEmpty
+                ? Container(
+              key: const ValueKey('suggestions'),
+              margin: const EdgeInsets.only(top: 8),
+              constraints: const BoxConstraints(maxHeight: 300),
               decoration: BoxDecoration(
                 color: _getDropdownBackground(isDark),
                 borderRadius: BorderRadius.circular(15),
@@ -170,133 +206,152 @@ class _SearchInputState extends State<SearchInput> {
                   BoxShadow(
                     color: _getDropdownShadow(isDark),
                     blurRadius: 15,
-                    offset: Offset(0, 4),
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-// Recent Cities Header
-                  if (_controller.text.isEmpty)
-                    Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: _getHeaderBackground(isDark),
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(15),
-                          topRight: Radius.circular(15),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(15),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Recent Cities Header
+                    if (_controller.text.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: _getHeaderBackground(isDark),
                         ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.history,
-                            size: 16,
-                            color: _getHeaderIconColor(isDark),
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Recent Searches',
-                            style: TextStyle(
-                              color: _getHeaderTextColor(isDark),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.history,
+                              size: 16,
+                              color: _getHeaderIconColor(isDark),
                             ),
-                          ),
-                          Spacer(),
-                          if (_suggestions.isNotEmpty)
-                            GestureDetector(
-                              onTap: () {
-                                final weatherController =
-                                    Get.find<WeatherController>();
-                                weatherController.clearRecentCities();
-                                _updateSuggestions(_controller.text);
-                              },
-                              child: Text(
-                                'Clear',
-                                style: TextStyle(
-                                  color: _getClearButtonColor(isDark),
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
+                            const SizedBox(width: 8),
+                            Text(
+                              'Recent Searches',
+                              style: TextStyle(
+                                color: _getHeaderTextColor(isDark),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const Spacer(),
+                            Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(4),
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  final weatherController =
+                                  Get.find<WeatherController>();
+                                  weatherController.clearRecentCities();
+                                  _updateSuggestions(_controller.text);
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  child: Text(
+                                    'Clear',
+                                    style: TextStyle(
+                                      color: _getClearButtonColor(isDark),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
 
-// Suggestions List
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
-                    itemCount: _suggestions.length,
-                    itemBuilder: (context, index) {
-                      final city = _suggestions[index];
-                      final isLast = index == _suggestions.length - 1;
+                    // Suggestions List
+                    Flexible(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        physics: const ClampingScrollPhysics(),
+                        itemCount: _suggestions.length,
+                        itemBuilder: (context, index) {
+                          final city = _suggestions[index];
+                          final isLast = index == _suggestions.length - 1;
 
-                      return InkWell(
-                        onTap: () => _selectSuggestion(city),
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            border: isLast
-                                ? null
-                                : Border(
+                          return Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () => _selectSuggestion(city),
+                              highlightColor: isDark
+                                  ? Colors.white.withOpacity(0.05)
+                                  : Colors.black.withOpacity(0.05),
+                              splashColor: isDark
+                                  ? Colors.white.withOpacity(0.1)
+                                  : Colors.black.withOpacity(0.1),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 14,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: isLast
+                                      ? null
+                                      : Border(
                                     bottom: BorderSide(
                                       color: _getSeparatorColor(isDark),
                                       width: 0.5,
                                     ),
                                   ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                _controller.text.isEmpty
-                                    ? Icons.history
-                                    : Icons.location_on,
-                                size: 18,
-                                color: _getSuggestionIconColor(isDark),
-                              ),
-                              SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  city,
-                                  style: TextStyle(
-                                    color: _getSuggestionTextColor(isDark),
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      _controller.text.isEmpty
+                                          ? Icons.history
+                                          : Icons.location_on,
+                                      size: 18,
+                                      color: _getSuggestionIconColor(isDark),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        city,
+                                        style: TextStyle(
+                                          color: _getSuggestionTextColor(isDark),
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.north_west,
+                                      size: 16,
+                                      color: _getSuggestionArrowColor(isDark),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              Icon(
-                                Icons.north_west,
-                                size: 16,
-                                color: _getSuggestionArrowColor(isDark),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+            )
+                : const SizedBox.shrink(),
+          ),
         ],
       );
     });
   }
 
-// Theme-aware color methods for search input
+  // Theme-aware color methods for search input
   Color _getSearchBackground(bool isDark) {
     return isDark
-        ? Color(0xFF2D2D44).withOpacity(0.9)
+        ? const Color(0xFF2D2D44).withOpacity(0.9)
         : Colors.white.withOpacity(0.9);
   }
 
@@ -307,7 +362,7 @@ class _SearchInputState extends State<SearchInput> {
   }
 
   Color _getSearchBorderActive(bool isDark) {
-    return isDark ? Color(0xFF4FC3F7) : Color(0xFF1976D2);
+    return isDark ? const Color(0xFF4FC3F7) : const Color(0xFF1976D2);
   }
 
   Color _getSearchShadow(bool isDark) {
@@ -317,20 +372,20 @@ class _SearchInputState extends State<SearchInput> {
   }
 
   Color _getTextColor(bool isDark) {
-    return isDark ? Colors.white : Color(0xFF1A1A1A);
+    return isDark ? Colors.white : const Color(0xFF1A1A1A);
   }
 
   Color _getHintColor(bool isDark) {
-    return isDark ? Colors.white.withOpacity(0.7) : Color(0xFF666666);
+    return isDark ? Colors.white.withOpacity(0.7) : const Color(0xFF666666);
   }
 
   Color _getIconColor(bool isDark) {
-    return isDark ? Colors.white.withOpacity(0.7) : Color(0xFF666666);
+    return isDark ? Colors.white.withOpacity(0.7) : const Color(0xFF666666);
   }
 
-// Dropdown colors
+  // Dropdown colors
   Color _getDropdownBackground(bool isDark) {
-    return isDark ? Color(0xFF2D2D44) : Colors.white;
+    return isDark ? const Color(0xFF2D2D44) : Colors.white;
   }
 
   Color _getDropdownBorder(bool isDark) {
@@ -347,20 +402,20 @@ class _SearchInputState extends State<SearchInput> {
 
   Color _getHeaderBackground(bool isDark) {
     return isDark
-        ? Color(0xFF4FC3F7).withOpacity(0.1)
-        : Color(0xFF1976D2).withOpacity(0.05);
+        ? const Color(0xFF4FC3F7).withOpacity(0.1)
+        : const Color(0xFF1976D2).withOpacity(0.05);
   }
 
   Color _getHeaderIconColor(bool isDark) {
-    return isDark ? Color(0xFF4FC3F7) : Color(0xFF1976D2);
+    return isDark ? const Color(0xFF4FC3F7) : const Color(0xFF1976D2);
   }
 
   Color _getHeaderTextColor(bool isDark) {
-    return isDark ? Color(0xFF4FC3F7) : Color(0xFF1976D2);
+    return isDark ? const Color(0xFF4FC3F7) : const Color(0xFF1976D2);
   }
 
   Color _getClearButtonColor(bool isDark) {
-    return isDark ? Color(0xFFFF6B6B) : Color(0xFFD32F2F);
+    return isDark ? const Color(0xFFFF6B6B) : const Color(0xFFD32F2F);
   }
 
   Color _getSeparatorColor(bool isDark) {
@@ -370,14 +425,14 @@ class _SearchInputState extends State<SearchInput> {
   }
 
   Color _getSuggestionIconColor(bool isDark) {
-    return isDark ? Colors.white.withOpacity(0.6) : Color(0xFF666666);
+    return isDark ? Colors.white.withOpacity(0.6) : const Color(0xFF666666);
   }
 
   Color _getSuggestionTextColor(bool isDark) {
-    return isDark ? Colors.white : Color(0xFF1A1A1A);
+    return isDark ? Colors.white : const Color(0xFF1A1A1A);
   }
 
   Color _getSuggestionArrowColor(bool isDark) {
-    return isDark ? Colors.white.withOpacity(0.4) : Color(0xFF999999);
+    return isDark ? Colors.white.withOpacity(0.4) : const Color(0xFF999999);
   }
 }

@@ -143,45 +143,59 @@ class _ForecastScreenState extends State<ForecastScreen>
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.only(
-                    top: 15,
-                    left: 16,
-                    right: 16,
+                    left: 10,
+                    right: 10,
                     bottom: 15,
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 10.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.arrow_back, color: colorScheme.onBackground),
-                          onPressed: () => Get.back(),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      InkWell(onTap: () => Get.back(),
+
+                        child: Container(
+                          width: 50,
+                          height: 50,
+                          padding: const EdgeInsets.all(20),
+                          child: Icon(Icons.arrow_back, color: colorScheme.onBackground),
+
                         ),
-                         Text(
+                      ),
+                       Padding(
+                         padding: const EdgeInsets.only(top: 8.0),
+                         child: Text(
                           'Weather Forecast',
                           style: TextStyle(
                             color: isDark? Colors.white:Colors.black,
                             fontWeight: FontWeight.bold,
                             fontSize: 22,
                           ),
-                        ),
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                isDark ? Icons.light_mode : Icons.dark_mode,
-                                color: colorScheme.onBackground,
-                              ),
-                              onPressed: settingsController.toggleDarkMode,
+                                               ),
+                       ),
+                      Row(
+                        children: [
+
+                          InkWell(onTap: settingsController.toggleDarkMode,
+
+                            child: Container(
+                              width: 50,
+                              height: 50,
+                              padding: const EdgeInsets.all(20),
+                              child:  Icon(
+                              isDark ? Icons.light_mode : Icons.dark_mode,
+                              color: colorScheme.onBackground,
                             ),
-                            IconButton(
-                              icon: Icon(Icons.refresh, color: colorScheme.onBackground),
-                              onPressed: () => weatherController.refreshWeather(),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                          ),),
+                          InkWell(onTap: () => weatherController.refreshWeather(),
+
+                            child: Container(
+                              width: 50,
+                              height: 50,
+                              padding: const EdgeInsets.all(20),
+                              child:Icon(Icons.refresh, color: colorScheme.onBackground),
+                          ),)
+                        ],
+                      ),
+                    ],
                   ),
                 ),
 

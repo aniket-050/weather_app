@@ -6,6 +6,8 @@ import '../controllers/weather_controller.dart';
 import '../services/storage_service.dart';
 
 class SettingsView extends StatelessWidget {
+  const SettingsView({super.key});
+
   @override
   Widget build(BuildContext context) {
     final settingsController = Get.find<SettingsController>();
@@ -45,33 +47,37 @@ class SettingsView extends StatelessWidget {
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.only(
-                    top: MediaQuery.of(context).padding.top + 15,
                     left: 16,
                     right: 16,
                     bottom: 15,
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 10.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        IconButton(
-                        icon: Icon(
-                          Icons.arrow_back,
-                          color: isDark ? Colors.white : Color(0xFF1A1A1A),
-                        ),
-                        onPressed: () => Get.back(),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+
+                      InkWell(onTap: () => Get.back(),
+
+                child: Container(
+                  width: 50,
+                  height: 50,
+                  padding: const EdgeInsets.all(20),
+                  child: Icon(
+                        Icons.arrow_back,
+                        color: isDark ? Colors.white : Color(0xFF1A1A1A),
                       ),
-                         Text(
+                    ),),
+                       Padding(
+                         padding: const EdgeInsets.only(top: 10.0,left: 10),
+                         child: Text(
                           'Settings',
                           style: TextStyle(
                             color: isDark ? Colors.white:Colors.black,
                             fontWeight: FontWeight.bold,
                             fontSize: 22,
                           ),
-                        ),
-                      ],
-                    ),
+                                               ),
+                       ),
+                    ],
                   ),
                 ),
                 SizedBox(height: 8),

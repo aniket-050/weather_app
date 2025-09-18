@@ -42,88 +42,106 @@ class HomeView extends StatelessWidget {
           child: Scaffold(
             backgroundColor: Colors.transparent,
             extendBodyBehindAppBar: true,
-            body: GestureDetector(
-              onTap: () {
-                FocusScope.of(context).unfocus();
-              },
-              child: RefreshIndicator(
-                onRefresh: weatherController.refreshWeather,
-                backgroundColor: isDark ? const Color(0xFF2D2D44) : Colors.white,
-                color: isDark ? const Color(0xFF4FC3F7) : const Color(0xFF1976D2),
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: MediaQuery.of(context).size.height,
-                    ),
-                    child: Column(
-                      children: [
-                        // Custom App Bar
-                        Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.only(
-                            top: MediaQuery.of(context).padding.top + 15,
-                            left: 16,
-                            right: 16,
-                            bottom: 15,
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 10.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'Weatherly',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 22,
-                                  ),
+            body: RefreshIndicator(
+              onRefresh: weatherController.refreshWeather,
+              backgroundColor: isDark ? const Color(0xFF2D2D44) : Colors.white,
+              color: isDark ? const Color(0xFF4FC3F7) : const Color(0xFF1976D2),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: MediaQuery.of(context).size.height,
+                  ),
+                  child: Column(
+                    children: [
+                      // Custom App Bar
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.only(
+                          left: 16,
+                          right: 16,
+                          bottom: 15,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 10.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Weatherly',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 22,
                                 ),
-                                Row(
-                                  children: [
-                                    IconButton(
-                                      icon: Icon(
-                                        isDark ? Icons.light_mode : Icons.dark_mode,
+                              ),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  // Simple IconButton - Works perfectly
+                                  InkWell(
+                                    onTap: () {
+                                      HapticFeedback.lightImpact();
+                                      settingsController.toggleDarkMode();
+                                    },
+                                    child: Container(
+                                      width: 50,
+                                      height: 50,
+                                      padding: const EdgeInsets.all(20),
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(bottom: 15.0,right: 15),
+                                        child: Icon(
+                                            isDark ? Icons.light_mode : Icons.dark_mode,
+                                            color: Colors.white,
+                                          ),
+                                      ),
+                                    ),
+                                  ),
+                                  // Simple IconButton - Works perfectly
+                                  InkWell(
+                                    onTap: () {
+                                      HapticFeedback.lightImpact();
+                                      Get.toNamed(AppRoutes.settings);
+                                    },
+                                    child: Container(
+                                      width: 50,
+                                      height: 50,
+                                      padding: const EdgeInsets.all(20),
+                                      child: const Icon(
+                                        Icons.settings,
                                         color: Colors.white,
                                       ),
-                                      onPressed: settingsController.toggleDarkMode,
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.settings, color: Colors.white),
-                                      onPressed: () => Get.toNamed(AppRoutes.settings),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
+                                  ),)
+                                ],
+                              ),
+                            ],
                           ),
                         ),
+                      ),
 
-                        const SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
-                        // Search Bar
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: SearchInput(),
-                        ),
+                      // Search Bar
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: SearchInput(),
+                      ),
 
-                        const SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
-                        // Content based on state
-                        _buildMainContent(
-                          weatherController,
-                          settingsController,
-                          currentWeather,
-                          isDark,
-                          context,
-                        ),
+                      // Content based on state
+                      _buildMainContent(
+                        weatherController,
+                        settingsController,
+                        currentWeather,
+                        isDark,
+                        context,
+                      ),
 
-                        // Bottom padding for navigation bar
-                        SizedBox(height: MediaQuery.of(context).padding.bottom + 20),
-                      ],
-                    ),
+                      // Bottom padding for navigation bar
+                      SizedBox(height: MediaQuery.of(context).padding.bottom + 20),
+                    ],
                   ),
                 ),
               ),
@@ -265,18 +283,38 @@ class HomeView extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 30),
-                ElevatedButton(
-                  onPressed: weatherController.retrySearch,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isDark ? const Color(0xFF4FC3F7) : const Color(0xFF1976D2),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(25),
+                    splashColor: Colors.white.withOpacity(0.3),
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      weatherController.retrySearch();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF4FC3F7) : const Color(0xFF1976D2),
+                        borderRadius: BorderRadius.circular(25),
+                        boxShadow: isDark ? [] : [
+                          BoxShadow(
+                            color: const Color(0xFF1976D2).withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Text(
+                        'Try Again',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
-                    elevation: isDark ? 0 : 4,
                   ),
-                  child: const Text('Try Again'),
                 ),
               ],
             ),
@@ -415,56 +453,60 @@ class HomeView extends StatelessWidget {
         // View Detailed Forecast Button
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 20),
-          child: GestureDetector(
-            onTap: () => Get.toNamed('/forecast-screen'),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF4FC3F7).withOpacity(0.2)
-                    : Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              splashColor: isDark
+                  ? const Color(0xFF4FC3F7).withOpacity(0.3)
+                  : Colors.white.withOpacity(0.3),
+              highlightColor: isDark
+                  ? const Color(0xFF4FC3F7).withOpacity(0.1)
+                  : Colors.white.withOpacity(0.1),
+              onTap: () {
+                HapticFeedback.lightImpact();
+                Get.toNamed('/forecast-screen');
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
                   color: isDark
-                      ? const Color(0xFF4FC3F7).withOpacity(0.3)
-                      : Colors.white.withOpacity(0.4),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
+                      ? const Color(0xFF4FC3F7).withOpacity(0.2)
+                      : Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
                     color: isDark
-                        ? Colors.black.withOpacity(0.3)
-                        : Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+                        ? const Color(0xFF4FC3F7).withOpacity(0.3)
+                        : Colors.white.withOpacity(0.4),
+                    width: 1,
                   ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.analytics,
-                    color: isDark ? const Color(0xFF4FC3F7) : Colors.white,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'View Detailed Forecast',
-                    style: TextStyle(
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.analytics,
                       color: isDark ? const Color(0xFF4FC3F7) : Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                      size: 24,
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Icon(
-                    Icons.arrow_forward,
-                    color: isDark ? const Color(0xFF4FC3F7) : Colors.white,
-                    size: 20,
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    Text(
+                      'View Detailed Forecast',
+                      style: TextStyle(
+                        color: isDark ? const Color(0xFF4FC3F7) : Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Icon(
+                      Icons.arrow_forward,
+                      color: isDark ? const Color(0xFF4FC3F7) : Colors.white,
+                      size: 20,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
